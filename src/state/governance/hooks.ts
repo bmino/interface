@@ -55,14 +55,27 @@ export function useDataFromEventLogs() {
   const [formattedEvents, setFormattedEvents] = useState<any>()
   const govContract = useGovernanceContract()
 
+  // This is not a great solution
+  // Hardcode the block numbers containing new proposals
+  // We can then easily query the ProposalCreated log from them
+  const proposalBlocks = [1008897, 1218032]
+
   // create filter for these specific events
-  const filter = { ...govContract?.filters?.['ProposalCreated'](), fromBlock: 0, toBlock: 'latest' }
+  const filters = proposalBlocks.sort().map(block => ({
+    ...govContract?.filters?.['ProposalCreated'](),
+    fromBlock: block,
+    toBlock: block
+  }))
+
   const eventParser = new ethers.utils.Interface(GOV_ABI)
 
   useEffect(() => {
     async function fetchData() {
-      const pastEvents = await library?.getLogs(filter)
-      // reverse events to get them from newest to odlest
+      let pastEvents = [] as any[]
+      for (const filter of filters) {
+        pastEvents = pastEvents.concat(await library?.getLogs(filter))
+      }
+      // reverse events to get them from newest to oldest
       const formattedEventData = pastEvents
         ?.map(event => {
           const eventParsed = eventParser.parseLog(event).args
@@ -89,7 +102,7 @@ export function useDataFromEventLogs() {
     if (!formattedEvents) {
       fetchData()
     }
-  }, [eventParser, filter, library, formattedEvents])
+  }, [eventParser, filters, library, formattedEvents])
 
   return formattedEvents
 }
