@@ -1,4 +1,4 @@
-import { UNI } from './../../constants/index'
+import { GOVERNANCE_PROPOSAL_BLOCKS, UNI } from './../../constants/index'
 import { TokenAmount } from '@pangolindex/sdk'
 import { isAddress } from 'ethers/lib/utils'
 import { useGovernanceContract, usePngContract } from '../../hooks/useContract'
@@ -58,10 +58,10 @@ export function useDataFromEventLogs() {
   // This is not a great solution
   // Hardcode the block numbers containing new proposals
   // We can then easily query the ProposalCreated log from them
-  const proposalBlocks = [1008897, 1218032]
+  const proposalBlocks = GOVERNANCE_PROPOSAL_BLOCKS.sort()
 
   // create filter for these specific events
-  const filters = proposalBlocks.sort().map(block => ({
+  const filters = proposalBlocks.map(block => ({
     ...govContract?.filters?.['ProposalCreated'](),
     fromBlock: block,
     toBlock: block
